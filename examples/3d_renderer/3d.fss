@@ -1,0 +1,157 @@
+
+#macro empty_buckets() {
+    for var __i = 0; __i < LIST_AMOUNT; it(__i) {
+        lempty(__i + base_bucket)
+    }
+}
+
+// Gets the average distance on the z axis from some triangle.
+#macro trig_zdist(index, out) {
+    // Get indexes of vertices
+    var __ver1 = trigs[$index * 3]
+    var __ver2 = trigs[$index * 3 + 1]
+    var __ver3 = trigs[$index * 3 + 2]
+
+    // Get their z coords
+    var __z1 = vertices[__ver1 * 3 + 2]
+    var __z2 = vertices[__ver2 * 3 + 2]
+    var __z3 = vertices[__ver3 * 3 + 2]
+
+    $out = (__z1 + __z2 + __z3) / 3 + 1.5
+}
+
+// Gets a triangle's bucker index
+#macro trig_index(index, out) {
+    var __dist
+
+    #trig_zdist($index, __dist)
+
+    // floor((1/near - 1/z) / (1/near - 1/far) * (N-1))
+    $out = (__dist - NEAR_CLIP) / (FAR_CLIP - NEAR_CLIP) * (LIST_AMOUNT - 1)
+
+    if ($out < 0) {
+        $out = 0
+    }
+    if ($out > LIST_AMOUNT - 1) {
+        $out = LIST_AMOUNT - 1
+    }
+}
+
+#macro point_project(index) {
+    var __x = -vertices[$index * 3]
+    var __y = -vertices[$index * 3 + 1]
+    var __z = vertices[$index * 3 + 2] + model_z_offset
+
+    var __x_screen = (__x / __z) * f * width() * scale
+    var __y_screen = (__y / __z) * f * width() * scale
+
+    projected[$index * 2] = __x_screen + width() / 2
+    projected[$index * 2 + 1] = __y_screen + height() / 2
+}
+
+#macro project_points() {
+    var __len = projected.len()
+
+    for var __i = 0; __i < __len; __i += 2 {
+        #point_project(__i/2)
+    }
+}
+
+#macro trig_project(index) {
+    var __z_index
+
+    #trig_index($index, __z_index)
+
+    ladd(base_bucket+__z_index, $index)
+}
+
+#macro bucket_trigs() {
+    var __len = trigs.len() / 3
+
+    for var __i = 0; __i < __len; it(__i) {
+        #trig_project(__i)
+    }
+}
+
+#macro generate_queue() {
+    drawing_queue.empty()
+
+    for var __i = LIST_AMOUNT - 1; __i >= 0; __i -= 1 {
+        var __len = llen(__i + base_bucket)
+
+        for var __t = 0; __t < __len; it(__t) {
+            drawing_queue.add(lget(__i + base_bucket, __t))
+        }
+    }
+}
+
+var trig_dbuffer = lnew()
+
+#macro drawTrig(index) {
+    trig_dbuffer.empty()
+
+    var __base = $index * 3
+
+    var __brightness
+
+    #trig_brightness($index, __brightness)
+
+    var __r
+    var __g
+    var __b
+
+    #apply_brightness(__r, __brightness, colors[__base])
+    #apply_brightness(__g, __brightness, colors[__base + 1])
+    #apply_brightness(__b, __brightness, colors[__base + 2])
+
+    setColor(__r, __g, __b, 255)
+
+    for var __i = 0; __i < 3; it(__i) {
+        var __p_id = trigs[$index * 3 + __i]
+
+        var __p_x = projected[__p_id * 2]
+        var __p_y = projected[__p_id * 2 + 1]
+
+        trig_dbuffer.add(__p_x)
+        trig_dbuffer.add(__p_y)
+    }
+
+    trig_dbuffer.drawTriangles()
+}
+
+// draws all triangles
+#macro draw() {
+    var __len = drawing_queue.len()
+
+    for var __i = 0; __i < __len; it(__i) {
+        #drawTrig(drawing_queue[__i])
+    }
+}
+
+var clearScreen = lnew()
+#macro fillScreen(r, g, b, a) {
+    var __h = height()
+    var __w = width()
+    clearScreen.setTo(0, 0, 0, __h, __w, 0, __w, __h, __w, 0, 0, __h)
+    setColor($r, $g, $b, $a)
+    clearScreen.drawTriangles()
+}
+
+#macro rotate_point(sine, cosine, index, a1, a2) {
+    var __x = vertices[$index * 3 + $a1]
+    var __z = vertices[$index * 3 + $a2]
+
+    vertices[$index * 3 + $a1] = __x * $cosine - __z * $sine
+    vertices[$index * 3 + $a2] = __x * $sine + __z * $cosine
+}
+
+#macro rotate_points(angle, a1, a2) {
+    var __sin = sin($angle)
+    var __cos = cos($angle)
+
+    var __len = projected.len()
+
+    for var __i = 0; __i < __len; __i += 2 {
+        #rotate_point(__sin, __cos, __i/2, $a1, $a2)
+    }
+}

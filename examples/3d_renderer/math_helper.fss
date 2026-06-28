@@ -1,0 +1,28 @@
+#macro length(X, Y, Z, out) {
+    $out = sqrt($X * $X + $Y * $Y + $Z * $Z)
+}
+
+#macro normalize(X, Y, Z) {
+    var __len
+
+    #length($X, $Y, $Z, __len)
+
+    if (__len == 0) {
+        $X = 1
+    }
+    else {
+        $X /= __len
+        $Y /= __len
+        $Z /= __len
+    }
+}
+
+#macro dot(out, X1, Y1, Z1, X2, Y2, Z2) {
+    $out = $X1 * $X2 + $Y1 * $Y2 + $Z1 * $Z2
+}
+
+#macro cross(XO, YO, ZO, X1, Y1, Z1, X2, Y2, Z2) {
+    $XO = $Y1 * $Z2 - $Z1 * $Y2
+    $YO = $Z1 * $X2 - $X1 * $Z2
+    $ZO = $X1 * $Y2 - $Y1 * $X2
+}

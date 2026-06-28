@@ -1,0 +1,165 @@
+// vertices
+// trigs
+// colors
+
+#define IPAMOUNT 12
+
+var ico_points = lnew()
+var ico_trigs = lnew()
+
+var start_points = lnew()
+var start_trigs = lnew()
+
+var gold = 0.5 * (1 + sqrt(5))
+
+for var g = 0; g < 3; it(g)
+{
+    for var one_f = -1; one_f < 2; one_f += 2
+    {
+        for var g_f = -1; g_f < 2; g_f += 2
+        {
+            var start = ico_points.len()
+
+            ico_points.add(1)
+            ico_points.add(1)
+            ico_points.add(1)
+
+            ico_points[start + g] = 0
+            ico_points[start + (g + 1) % 3] = one_f
+            ico_points[start + (g + 2) % 3] = gold * g_f
+
+            #normalize(ico_points[start + g], ico_points[start + (g + 1) % 3], \
+                       ico_points[start + (g + 2) % 3])
+        }
+    }
+}
+
+ico_trigs.setTo(0, 4, 2, 0, 2, 5, 0, 8, 4, 0, 5, 10, 0, 10, 8, 1, 3, 6, 1, 7, 3, 1, 6, 8, 1, 10, 7, 1, 8, 10, 2, 4, 9, 2, 11, 5, 2, 9, 11, 3, 9, 6, 3, 7, 11, 3, 11, 9, 4, 8, 6, 4, 6, 9, 5, 7, 10, 5, 11, 7)
+
+
+var temptrigs = lnew()
+var temppoint = lnew()
+
+#macro POINT_HELPER(name, index) {
+    var $nameX = ico_points[$index * 3]
+    var $nameY = ico_points[$index * 3 + 1]
+    var $nameZ = ico_points[$index * 3 + 2]
+
+    temppoint.add($nameX)
+    temppoint.add($nameY)
+    temppoint.add($nameZ)
+}
+
+#macro AVERAGE_HELPER(p1, p2, name) {
+    var $nameX = ($p1X + $p2X) / 2
+    var $nameY = ($p1Y + $p2Y) / 2
+    var $nameZ = ($p1Z + $p2Z) / 2
+
+    #normalize($nameX, $nameY, $nameZ)
+
+    temppoint.add($nameX)
+    temppoint.add($nameY)
+    temppoint.add($nameZ)
+}
+
+#macro ADD_TRIG_HELPER(p1, p2, p3) {
+    temptrigs.add($p1 + base)
+    temptrigs.add($p2 + base)
+    temptrigs.add($p3 + base)
+}
+
+
+#macro subdivide() {
+    temptrigs.empty()
+    temppoint.empty()
+
+    for var i = 0; i < ico_trigs.len() / 3; it(i) {
+        var base = temppoint.len() / 3
+
+        ##POINT_HELPER(p1, ico_trigs[i * 3])
+        ##POINT_HELPER(p2, ico_trigs[i * 3 + 1])
+        ##POINT_HELPER(p3, ico_trigs[i * 3 + 2])
+
+        ##AVERAGE_HELPER(p1, p2, avg12)
+        ##AVERAGE_HELPER(p2, p3, avg23)
+        ##AVERAGE_HELPER(p1, p3, avg13)
+
+        #ADD_TRIG_HELPER(0, 3, 5)
+        #ADD_TRIG_HELPER(3, 1, 4)
+        #ADD_TRIG_HELPER(3, 4, 5)
+        #ADD_TRIG_HELPER(5, 4, 2)
+    }
+
+    ico_trigs.empty()
+    ico_points.empty()
+
+    for var i = 0; i < temppoint.len(); it(i) {
+        ico_points.add(temppoint[i])
+    }
+
+    for var i = 0; i < temptrigs.len(); it(i) {
+        ico_trigs.add(temptrigs[i])
+        colors.add(200)
+    }
+
+    vertices.empty()
+    trigs.empty()
+    colors.empty()
+    for var i = 0; i < ico_points.len(); it(i) {
+        vertices.add(ico_points[i])
+    }
+
+    for var i = 0; i < ico_trigs.len(); it(i) {
+        trigs.add(ico_trigs[i])
+        colors.add(200)
+    }
+
+    projected.empty()
+    shadow_ps.empty()
+    for var i = 0; i < ico_points.len() / 3; it(i) {
+        projected.add(0)
+        projected.add(0)
+
+        shadow_ps.add(0)
+        shadow_ps.add(0)
+    }
+    #light_cube(SVLIGHT_X, SVLIGHT_Y, SVLIGHT_Z, 0.3, 2, all_angle)
+}
+
+#macro revert() {
+    vertices.empty()
+    trigs.empty()
+    colors.empty()
+    ico_trigs.empty()
+    ico_points.empty()
+    for var i = 0; i < start_points.len(); it(i) {
+        vertices.add(start_points[i])
+        ico_points.add(start_points[i])
+    }
+
+    for var i = 0; i < start_trigs.len(); it(i) {
+        trigs.add(start_trigs[i])
+        ico_trigs.add(start_trigs[i])
+        colors.add(255)
+    }
+
+    projected.empty()
+    shadow_ps.empty()
+    for var i = 0; i < ico_points.len() / 3; it(i) {
+        projected.add(0)
+        projected.add(0)
+
+        shadow_ps.add(0)
+        shadow_ps.add(0)
+    }
+
+    #light_cube(SVLIGHT_X, SVLIGHT_Y, SVLIGHT_Z, 0.3, 2, all_angle)
+}
+
+for var i = 0; i < ico_points.len(); it(i) {
+    start_points.add(ico_points[i])
+}
+
+for var i = 0; i < ico_trigs.len(); it(i) {
+    start_trigs.add(ico_trigs[i])
+}

@@ -1,0 +1,60 @@
+#macro length(X, Y, Z, out) {
+    $out = sqrt($X * $X + $Y * $Y + $Z * $Z)
+}
+
+#macro r_dist(X1, Y1, Z1, X2, Y2, Z2, out) {
+    var __xd = (X1 - X2)
+    var __yd = (Y1 - Y2)
+    var __zd = (Z1 - Z2)
+
+    $out = sqrt(__xd * __xd + __yd * __yd + __zd * __zd)
+}
+
+#macro abs(val, out) {
+    if $val < 0 {
+        $out = -$val
+    }
+    else {
+        $out = $val
+    }
+}
+
+#macro normalize(X, Y, Z) {
+    var __len
+
+    #length($X, $Y, $Z, __len)
+
+    if (__len == 0) {
+        $X = 1
+    }
+    else {
+        $X /= __len
+        $Y /= __len
+        $Z /= __len
+    }
+}
+
+#macro dot(out, X1, Y1, Z1, X2, Y2, Z2) {
+    $out = $X1 * $X2 + $Y1 * $Y2 + $Z1 * $Z2
+}
+
+#macro cross(XO, YO, ZO, X1, Y1, Z1, X2, Y2, Z2) {
+    $XO = $Y1 * $Z2 - $Z1 * $Y2
+    $YO = $Z1 * $X2 - $X1 * $Z2
+    $ZO = $X1 * $Y2 - $Y1 * $X2
+}
+
+var num_chars = lnew()
+
+num_chars.setTo("0123456789")
+
+#macro parseInt(string, value, start) {
+    var __v = floor($value)
+
+    if (__v <= 0) {
+        $string.add('0')
+    }
+    for ; __v > 0; __v = floor(__v / 10) {
+        $string.insert(num_chars[__v % 10], $start)
+    }
+}

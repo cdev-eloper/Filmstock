@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language name="Filmstock" version="1" kateversion="6.2" section="Sources" extensions="*.fss">
+    <highlighting>
+        <list name="var">
+            <item>var</item>
+        </list>
+        <list name="flow">
+            <item>for</item>
+            <item>if</item>
+            <item>else</item>
+            <item>break</item>
+            <item>continue</item>
+        </list>
+        <list name="keywords">
+            <item>not</item>
+            <item>linput</item>
+            <item>input</item>
+            <item>lload</item>
+            <item>load</item>
+            <item>lstore</item>
+            <item>store</item>
+            <item>printSep</item>
+            <item>nl</item>
+            <item>pi</item>
+            <item>sin</item>
+            <item>cos</item>
+            <item>tan</item>
+            <item>asin</item>
+            <item>acos</item>
+            <item>atan2</item>
+            <item>root</item>
+            <item>sqrt</item>
+            <item>not</item>
+            <item>round</item>
+            <item>ceil</item>
+            <item>floor</item>
+            <item>time</item>
+            <item>print</item>
+            <item>printNum</item>
+            <item>sleep</item>
+            <item>random</item>
+            <item>it</item>
+            <item>ia</item>
+            <item>lamount</item>
+            <item>amount</item>
+            <item>lreset</item>
+            <item>reset</item>
+            <item>lnew</item>
+            <item>lget</item>
+            <item>get</item>
+            <item>lset</item>
+            <item>set</item>
+            <item>llen</item>
+            <item>len</item>
+            <item>ladd</item>
+            <item>add</item>
+            <item>lremove</item>
+            <item>remove</item>
+            <item>lempty</item>
+            <item>empty</item>
+            <item>linsert</item>
+            <item>insert</item>
+            <item>reverse</item>
+            <item>lreverse</item>
+            <item>lshuffle</item>
+            <item>shuffle</item>
+            <item>sort</item>
+            <item>lsort</item>
+            <item>lprint</item>
+            <item>lprintNum</item>
+            <item>lprintSep</item>
+            <item>dStart</item>
+            <item>dEnd</item>
+            <item>setColor</item>
+            <item>setPosition</item>
+            <item>setTextSize</item>
+            <item>ldrawTriangles</item>
+            <item>drawTriangles</item>
+            <item>ldrawText</item>
+            <item>drawText</item>
+            <item>isPressed</item>
+            <item>isMousePressed</item>
+            <item>mouseX</item>
+            <item>mouseY</item>
+            <item>getScroll</item>
+            <item>width</item>
+            <item>height</item>
+            <item>setTo</item>
+            <item>lsetTo</item>
+        </list>
+        <contexts>
+            <context attribute="Normal Text" lineEndContext="#pop" name="Normal Text">
+                <DetectChar attribute="Macro" context="Macro" char="#"/>
+                <keyword attribute="Keyword" context="#stay" String="keywords"/>
+                <keyword attribute="Variable" context="#stay" String="var"/>
+                <keyword attribute="Flow Controll" context="#stay" String="flow"/>
+                <Detect2Chars attribute="Comment" context="Comment" char="/" char1="/"/>
+            </context>
+            <context name="Macro" attribute="Macro" lineEndContext="#pop">
+                <RegExpr attribute="Macro" context="#pop" String="\w+"/>
+                <DetectChar attribute="Normal Text" context="#pop" char=" "/>
+            </context>
+            <context name="Comment" attribute="Comment" lineEndContext="#pop"/>
+        </contexts>
+        <itemDatas>
+            <itemData name="Normal Text" defStyleNum="dsNormal"/>
+            <itemData name="Macro" defStyleNum="dsPreprocessor"/>
+            <itemData name="Keyword" defStyleNum="dsBuiltIn"/>
+            <itemData name="Variable" defStyleNum="dsVariable"/>
+            <itemData name="Flow Controll" defStyleNum="dsControlFlow"/>
+            <itemData name="Comment" defStyleNum="dsComment"/>
+        </itemDatas>
+    </highlighting>
+</language>

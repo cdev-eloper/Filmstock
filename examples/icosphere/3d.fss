@@ -1,0 +1,440 @@
+#macro empty_buckets() {
+    for var __i = 0; __i < LIST_AMOUNT; it(__i) {
+        lempty(__i + base_bucket)
+    }
+}
+
+// Gets the average distance on the z axis from some triangle.
+#macro trig_zdist(index, out) {
+    // Get indexes of vertices
+    var __ver1 = trigs[$index * 3]
+    var __ver2 = trigs[$index * 3 + 1]
+    var __ver3 = trigs[$index * 3 + 2]
+
+    // Get their z coords
+    var __z1 = vertices[__ver1 * 3 + 2]
+    var __z2 = vertices[__ver2 * 3 + 2]
+    var __z3 = vertices[__ver3 * 3 + 2]
+
+    $out = (__z1 + __z2 + __z3) / 3 + 1.5
+}
+
+// Gets a triangle's bucker index
+#macro trig_index(index, out) {
+    var __dist
+
+    #trig_zdist($index, __dist)
+
+    // floor((1/near - 1/z) / (1/near - 1/far) * (N-1))
+    $out = (__dist - NEAR_CLIP) / (FAR_CLIP - NEAR_CLIP) * (LIST_AMOUNT - 1)
+
+    if ($out < 0) {
+        $out = 0
+    }
+    if ($out > LIST_AMOUNT - 1) {
+        $out = LIST_AMOUNT - 1
+    }
+}
+
+#define ERR_TRIG_VAL -298132.398462
+
+#macro shadow_project(index) {
+    var __x = vertices[$index * 3] * ball_hr
+    var __y = vertices[$index * 3 + 1] * ball_r + ball_y
+    var __z = vertices[$index * 3 + 2] * ball_hr
+
+    var E_X = (__x - LIGHT_X)
+    var E_Y = __y  - LIGHT_Y
+    var E_Z = (__z - LIGHT_Z)
+
+    if E_Y > 0 {
+        var __f = (floor_y - __y) / E_Y
+
+        var __x_w = (__x + E_X * __f)
+        var __z_w = (__z + model_z_offset) + E_Z * __f
+
+        if __z_w > NEAR_CLIP {
+            shadow_ps[$index * 2] = (__x_w / __z_w) * f * cached_width * scale + cached_width / 2
+            shadow_ps[$index * 2 + 1] = (floor_y / __z_w) * f * cached_width * scale + cached_height / 2
+        }
+        else {
+            shadow_ps[$index * 2] = ERR_TRIG_VAL
+            shadow_ps[$index * 2 + 1] = ERR_TRIG_VAL
+        }
+    }
+    else {
+        var __f = 10000
+
+        var __x_w = (__x + E_X * __f)
+        var __z_w = (__z + model_z_offset) + E_Z * __f
+
+        if __z_w > NEAR_CLIP {
+            shadow_ps[$index * 2] = (__x_w / __z_w) * f * cached_width * scale + cached_width / 2
+            shadow_ps[$index * 2 + 1] = (floor_y / __z_w) * f * cached_width * scale + cached_height / 2
+        }
+        else {
+            shadow_ps[$index * 2] = ERR_TRIG_VAL
+            shadow_ps[$index * 2 + 1] = ERR_TRIG_VAL
+        }
+    }
+}
+
+#macro point_project(index) {
+    var __x
+    var __y
+    var __z
+
+    if ($index < ico_points.len() / 3) {
+        __x = vertices[$index * 3] * ball_hr
+        __y = vertices[$index * 3 + 1] * ball_r + ball_y
+        __z = vertices[$index * 3 + 2] * ball_hr + model_z_offset
+    }
+    else {
+        __x = vertices[$index * 3]
+        __y = vertices[$index * 3 + 1]
+        __z = vertices[$index * 3 + 2] + model_z_offset
+    }
+
+    var __x_screen = (__x / __z) * f * cached_width * scale
+    var __y_screen = (__y / __z) * f * cached_width * scale
+
+    projected[$index * 2] = __x_screen + cached_width / 2
+    projected[$index * 2 + 1] = __y_screen + cached_height / 2
+}
+
+#macro project_points() {
+    var __len = vertices.len() / 3
+
+    for var __i = 0; __i < __len; __i += 1 {
+        #point_project(__i)
+        #shadow_project(__i)
+    }
+}
+
+#macro trig_project(index) {
+    var __z_index
+
+    #trig_index($index, __z_index)
+
+    ladd(base_bucket+__z_index, $index)
+}
+
+#macro bucket_trigs() {
+    var __len = trigs.len() / 3
+
+    for var __i = 0; __i < __len - 4; it(__i) {
+        #trig_project(__i)
+    }
+}
+
+#macro generate_queue() {
+    drawing_queue.empty()
+
+    for var __i = LIST_AMOUNT - 1; __i >= 0; __i -= 1 {
+        var __len = llen(__i + base_bucket)
+
+        for var __t = 0; __t < __len; it(__t) {
+            drawing_queue.add(lget(__i + base_bucket, __t))
+        }
+    }
+}
+
+var trig_dbuffer = lnew()
+
+#macro trigShadowHelper(p) {
+    trig_dbuffer.add(shadow_ps[$p * 2])
+    trig_dbuffer.add(shadow_ps[$p * 2 + 1])
+}
+
+#macro drawTrigShadow(index) {
+    trig_dbuffer.empty()
+
+    var P1 = trigs[$index * 3]
+    var P2 = trigs[$index * 3 + 1]
+    var P3 = trigs[$index * 3 + 2]
+
+    if (shadow_ps[P1 * 2] != ERR_TRIG_VAL) {
+        if (shadow_ps[P2 * 2] != ERR_TRIG_VAL) {
+            if (shadow_ps[P3 * 2] != ERR_TRIG_VAL) {
+                ##trigShadowHelper(P1)
+                ##trigShadowHelper(P2)
+                ##trigShadowHelper(P3)
+
+                trig_dbuffer.drawTriangles()
+            }
+        }
+    }
+}
+
+#macro drawTrig(index) {
+    trig_dbuffer.empty()
+
+    var __base = $index * 3
+
+    var __brightness
+
+    #trig_brightness($index, __brightness)
+
+    if ($index >= ico_trigs.len() / 3) {
+        if ($index < ico_trigs.len() / 3 + 12) {
+             __brightness = 1
+        }
+        else {
+            __brightness = 0.3
+        }
+    }
+
+    var __r
+    var __g
+    var __b
+
+    #apply_brightness(__r, __brightness, colors[__base])
+    #apply_brightness(__g, __brightness, colors[__base + 1])
+    #apply_brightness(__b, __brightness, colors[__base + 2])
+
+    setColor(__r, __g, __b, 255)
+
+    for var __i = 0; __i < 3; it(__i) {
+        var __p_id = trigs[$index * 3 + __i]
+
+        var __p_x = projected[__p_id * 2]
+        var __p_y = projected[__p_id * 2 + 1]
+
+        trig_dbuffer.add(__p_x)
+        trig_dbuffer.add(__p_y)
+    }
+
+    trig_dbuffer.drawTriangles()
+}
+
+var trigString = lnew()
+
+// draws all triangles
+#macro draw() {
+    var __len = drawing_queue.len()
+    var __len_sh = ico_trigs.len() / 3
+
+    trigString.setTo("Trigs: ")
+    #parseInt(trigString, __len_sh, 7)
+
+    for var __i = __len; __i < __len + 4; it(__i) {
+        #drawTrig(__i)
+    }
+
+    setColor(0, 0, 0, 128)
+
+    for var __i = 0; __i < __len_sh; it(__i) {
+        #drawTrigShadow(__i)
+    }
+
+    for var __i = 0; __i < __len; it(__i) {
+        #drawTrig(drawing_queue[__i])
+    }
+
+    setPosition(10, 10)
+    setColor(255, 255, 255, 255)
+    setTextSize(cached_height * 0.1)
+    trigString.drawText()
+    setPosition(0, 0)
+}
+
+var clearScreen = lnew()
+#macro fillScreen(r, g, b, a) {
+    var __h = cached_height
+    var __w = cached_width
+    clearScreen.setTo(0, 0, 0, __h, __w, 0, __w, __h, __w, 0, 0, __h)
+    setColor($r, $g, $b, $a)
+    clearScreen.drawTriangles()
+}
+
+#macro rotate_point(arr, sine, cosine, index, a1, a2) {
+    var __x = vertices[$index * 3 + $a1]
+    var __z = vertices[$index * 3 + $a2]
+
+    $arr[$index * 3 + $a1] = __x * $cosine - __z * $sine
+    $arr[$index * 3 + $a2] = __x * $sine + __z * $cosine
+}
+
+#macro rotate_points(angle, a1, a2) {
+    var __sin = sin($angle)
+    var __cos = cos($angle)
+
+    var __len = projected.len()
+
+    for var __i = 0; __i < __len; __i += 2 {
+        #rotate_point(vertices, __sin, __cos, __i/2, $a1, $a2)
+    }
+}
+
+#macro light_cube(CX, CY, CZ, D, factor, angle) {
+    var __base = vertices.len() / 3
+
+    vertices.add(LIGHT_X - $D/2 * cos($angle) + $D/2 * sin($angle))
+    vertices.add(LIGHT_Y-$D/2)
+    vertices.add(LIGHT_Z - $D/2 * sin($angle) - $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X + $D/2 * cos($angle) + $D/2 * sin($angle))
+    vertices.add(LIGHT_Y-$D/2)
+    vertices.add(LIGHT_Z + $D/2 * sin($angle) - $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X + $D/2 * cos($angle) + $D/2 * sin($angle))
+    vertices.add(LIGHT_Y+$D/2)
+    vertices.add(LIGHT_Z + $D/2 * sin($angle) - $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X - $D/2 * cos($angle) + $D/2 * sin($angle))
+    vertices.add(LIGHT_Y+$D/2)
+    vertices.add(LIGHT_Z - $D/2 * sin($angle) - $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X - $D/2 * cos($angle) - $D/2 * sin($angle))
+    vertices.add(LIGHT_Y-$D/2)
+    vertices.add(LIGHT_Z - $D/2 * sin($angle) + $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X + $D/2 * cos($angle) - $D/2 * sin($angle))
+    vertices.add(LIGHT_Y-$D/2)
+    vertices.add(LIGHT_Z + $D/2 * sin($angle) + $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X + $D/2 * cos($angle) - $D/2 * sin($angle))
+    vertices.add(LIGHT_Y+$D/2)
+    vertices.add(LIGHT_Z + $D/2 * sin($angle) + $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(LIGHT_X - $D/2 * cos($angle) - $D/2 * sin($angle))
+    vertices.add(LIGHT_Y+$D/2)
+    vertices.add(LIGHT_Z - $D/2 * sin($angle) + $D/2 * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 2)
+    colors.add(255)
+    trigs.add(__base + 1)
+    colors.add(255)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 3)
+    colors.add(255)
+    trigs.add(__base + 2)
+    colors.add(255)
+    trigs.add(__base + 4)
+    colors.add(255)
+    trigs.add(__base + 5)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 4)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 7)
+    colors.add(255)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 4)
+    colors.add(255)
+    trigs.add(__base + 7)
+    colors.add(255)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 7)
+    colors.add(255)
+    trigs.add(__base + 3)
+    colors.add(255)
+    trigs.add(__base + 1)
+    colors.add(255)
+    trigs.add(__base + 2)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 1)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 5)
+    colors.add(255)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 1)
+    colors.add(255)
+    trigs.add(__base + 5)
+    colors.add(255)
+    trigs.add(__base + 0)
+    colors.add(255)
+    trigs.add(__base + 5)
+    colors.add(255)
+    trigs.add(__base + 4)
+    colors.add(255)
+    trigs.add(__base + 3)
+    colors.add(255)
+    trigs.add(__base + 7)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 3)
+    colors.add(255)
+    trigs.add(__base + 6)
+    colors.add(255)
+    trigs.add(__base + 2)
+    colors.add(255)
+    vertices.add((-$CX-$D/2) * cos($angle) - (-$CZ-$D/2) * sin($angle))
+    vertices.add(floor_y + 0.01)
+    vertices.add((-$CX-$D/2) * sin($angle) + (-$CZ-$D/2) * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(($CX+$D/2) * cos($angle) - (-$CZ-$D/2) * sin($angle))
+    vertices.add(floor_y + 0.01)
+    vertices.add(($CX+$D/2) * sin($angle) + (-$CZ-$D/2) * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add(($CX+$D/2) * cos($angle) - ($CZ+$D/2) * sin($angle))
+    vertices.add(floor_y + 0.01)
+    vertices.add(($CX+$D/2) * sin($angle) + ($CZ+$D/2) * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    vertices.add((-$CX-$D/2) * cos($angle) - ($CZ+$D/2) * sin($angle))
+    vertices.add(floor_y + 0.01)
+    vertices.add((-$CX-$D/2) * sin($angle) + ($CZ+$D/2) * cos($angle))
+    projected.add(0)
+    projected.add(0)
+    shadow_ps.add(0)
+    shadow_ps.add(0)
+    trigs.add(__base + 8)
+    colors.add(255)
+    trigs.add(__base + 9)
+    colors.add(255)
+    trigs.add(__base + 10)
+    colors.add(255)
+    trigs.add(__base + 8)
+    colors.add(255)
+    trigs.add(__base + 10)
+    colors.add(255)
+    trigs.add(__base + 11)
+    colors.add(255)
+}

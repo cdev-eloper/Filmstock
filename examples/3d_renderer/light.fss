@@ -1,0 +1,81 @@
+var LIGHT_X = 0.3
+var LIGHT_Y = 1
+var LIGHT_Z = -0.1
+
+var AMBIENT = 0.1
+
+var SRGB_TO_L = lnew()
+var LRGB_TO_S = lnew()
+
+for var i = 0; i < 256; it(i) {
+    var scaled_i = i / 255
+
+    if (i < 0.04045 * 255) {
+        SRGB_TO_L.add(floor(scaled_i * 0.0773993808 * 255))
+    }
+    else {
+        SRGB_TO_L.add(floor((scaled_i * 0.9478672986 + 0.0521327014)^2.4*255))
+    }
+
+    if (i < 0.0031308 * 255) {
+        LRGB_TO_S.add(floor(scaled_i * 12.92 * 255))
+    }
+    else {
+        LRGB_TO_S.add(floor((1.055 * (scaled_i ^ 0.41666) - 0.055) * 255))
+    }
+}
+
+#normalize(LIGHT_X, LIGHT_Y, LIGHT_Z)
+
+#macro trig_normal(index, XN, YN, ZN) {
+    var __X1 = vertices[trigs[$index * 3] * 3]
+    var __Y1 = vertices[trigs[$index * 3] * 3 + 1]
+    var __Z1 = vertices[trigs[$index * 3] * 3 + 2]
+
+    var __X2 = vertices[trigs[$index * 3 + 1] * 3]
+    var __Y2 = vertices[trigs[$index * 3 + 1] * 3 + 1]
+    var __Z2 = vertices[trigs[$index * 3 + 1] * 3 + 2]
+
+    var __X3 = vertices[trigs[$index * 3 + 2] * 3]
+    var __Y3 = vertices[trigs[$index * 3 + 2] * 3 + 1]
+    var __Z3 = vertices[trigs[$index * 3 + 2] * 3 + 2]
+
+    var __XE1 = __X1 - __X2
+    var __YE1 = __Y1 - __Y2
+    var __ZE1 = __Z1 - __Z2
+
+    var __XE2 = __X1 - __X3
+    var __YE2 = __Y1 - __Y3
+    var __ZE2 = __Z1 - __Z3
+
+    #cross($XN, $YN, $ZN, __XE1, __YE1, __ZE1, __XE2, __YE2, __ZE2)
+
+    #normalize($XN, $YN, $ZN)
+}
+
+#macro trig_brightness(index, out) {
+    var __XN
+    var __YN
+    var __ZN
+
+    #trig_normal($index, __XN, __YN, __ZN)
+
+    #dot($out, __XN, __YN, __ZN, LIGHT_X, LIGHT_Y, LIGHT_Z)
+
+    if ($out < 0) {
+        $out = 0
+    }
+    else {
+        if ($out > 1) {
+            $out = 1
+        }
+    }
+}
+
+#macro apply_brightness(out, brightness, color) {
+    var __linear = SRGB_TO_L[$color]
+
+    $out = floor(__linear * $brightness * (1 - AMBIENT) + __linear * AMBIENT)
+
+    $out = LRGB_TO_S[$out]
+}

@@ -1,0 +1,86 @@
+var was_key_pressed
+var subdivisions
+
+var g = 0.002
+
+var ball_y = -8
+var ball_v = 0
+
+var ball_hr = 1
+
+var ball_r = 1
+
+var floor_y = 5
+
+var trigs_ball
+
+var all_angle
+
+#include 3d_helper.fss
+
+for ; 1 ; {
+    trigs_ball = round(20 * 20 ^ subdivisions)
+
+    ball_r = ball_v
+
+    if ball_r < 0 {
+        ball_r *= -1
+    }
+
+    ball_r = ball_r * 2.5 + 1
+
+    if (ball_y + ball_r >= floor_y) & ball_v > 0 {
+        ball_r = floor_y - ball_y
+
+        ball_v -= 0.015
+
+        ball_v += g * 0.6
+        ball_y += ball_v * 0.6
+
+        if (ball_v < -0.21) {
+            ball_v = -0.21
+        }
+    }
+    else {
+        ball_v += g
+        ball_y += ball_v
+    }
+
+    if ball_y >= floor_y - 0.2 {
+        if (ball_v > 0) {
+            ball_v *= -1
+        }
+
+        ball_y = floor_y - 1.01
+    }
+
+    ball_hr = sqrt(1 / ball_r)
+
+    #3d_engine_update()
+
+    if isPressed(83) {
+        if not(was_key_pressed) {
+            #subdivide()
+            it(subdivisions)
+        }
+
+        was_key_pressed = 1
+    }
+    else {
+        if isPressed(82) {
+            if not(was_key_pressed) & subdivisions > 0 {
+                #revert()
+                subdivisions -= 1
+
+                for var i = 0; i < subdivisions; it(i) {
+                    #subdivide()
+                }
+            }
+
+            was_key_pressed = 1
+        }
+        else {
+            was_key_pressed = 0
+        }
+    }
+}

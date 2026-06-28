@@ -1,0 +1,98 @@
+var LIGHT_X = 2
+var LIGHT_Y = -3
+var LIGHT_Z = 2
+
+var SVLIGHT_X = LIGHT_X
+var SVLIGHT_Y = LIGHT_Y
+var SVLIGHT_Z = LIGHT_Z
+
+var AMBIENT = 0
+
+var SRGB_TO_L = lnew()
+var LRGB_TO_S = lnew()
+
+for var i = 0; i < 256; it(i) {
+    var scaled_i = i / 255
+
+    if (i < 0.04045 * 255) {
+        SRGB_TO_L.add(floor(scaled_i * 0.0773993808 * 255))
+    }
+    else {
+        SRGB_TO_L.add(floor((scaled_i * 0.9478672986 + 0.0521327014)^2.4*255))
+    }
+
+    if (i < 0.0031308 * 255) {
+        LRGB_TO_S.add(floor(scaled_i * 12.92 * 255))
+    }
+    else {
+        LRGB_TO_S.add(floor((1.055 * (scaled_i ^ 0.41666) - 0.055) * 255))
+    }
+}
+
+#macro trig_normal(index, XN, YN, ZN) {
+    var X1 = vertices[trigs[$index * 3] * 3]
+    var Y1 = vertices[trigs[$index * 3] * 3 + 1]
+    var Z1 = vertices[trigs[$index * 3] * 3 + 2]
+
+    var X2 = vertices[trigs[$index * 3 + 1] * 3]
+    var Y2 = vertices[trigs[$index * 3 + 1] * 3 + 1]
+    var Z2 = vertices[trigs[$index * 3 + 1] * 3 + 2]
+
+    var X3 = vertices[trigs[$index * 3 + 2] * 3]
+    var Y3 = vertices[trigs[$index * 3 + 2] * 3 + 1]
+    var Z3 = vertices[trigs[$index * 3 + 2] * 3 + 2]
+
+    var XE1 = X1 - X2
+    var YE1 = Y1 - Y2
+    var ZE1 = Z1 - Z2
+
+    var XE2 = X1 - X3
+    var YE2 = Y1 - Y3
+    var ZE2 = Z1 - Z3
+
+    #cross($XN, $YN, $ZN, XE1, YE1, ZE1, XE2, YE2, ZE2)
+
+    #normalize($XN, $YN, $ZN)
+}
+
+#macro light_dir_help(axis, offset) {
+    var $axisAVG = ($axis1 + $axis2 + $axis3) / 3 + $offset
+    var $axisAVGE = (LIGHT_$axis - $axisAVG)
+}
+
+#macro trig_brightness(index, out) {
+    var __XN
+    var __YN
+    var __ZN
+
+    ##trig_normal($index, __XN, __YN, __ZN)
+
+    ##light_dir_help(X, 0)
+    ##light_dir_help(Y, ball_y)
+    ##light_dir_help(Z, 0)
+
+    #dot($out, __XN, __YN, __ZN, XAVGE, YAVGE, ZAVGE)
+
+    // $out += 0.7
+
+    // $out = $out * $out * $out
+
+    $out /= 4.913
+
+    if ($out < 0) {
+        $out = 0
+    }
+    else {
+        if ($out > 1) {
+            $out = 1
+        }
+    }
+}
+
+#macro apply_brightness(out, brightness, color) {
+    var __linear = SRGB_TO_L[$color]
+
+    $out = floor(__linear * $brightness * (1 - AMBIENT) + __linear * AMBIENT)
+
+    $out = LRGB_TO_S[$out]
+}

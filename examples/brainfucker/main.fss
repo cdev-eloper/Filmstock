@@ -1,0 +1,63 @@
+var data = lnew()
+data.add(0)
+
+var input = lnew()
+var input_pointer
+
+var data_pointer
+
+#macro input() {
+    if (input_pointer >= input.len()) {
+        input.input()
+    }
+
+    data[data_pointer] = input[input_pointer]
+
+    input_pointer += 1
+}
+
+#macro inc() {
+    data_pointer += 1
+
+    if (data_pointer >= data.len()) {
+        data.add(0)
+    }
+}
+#macro dec() {
+    data_pointer -= 1
+
+    if (data_pointer < 0) {
+        print("Data pointer is negative!")
+        end(1)
+    }
+}
+
+#macro inc_data() {
+    data[data_pointer] += 1
+
+    data[data_pointer] %= 256
+}
+
+
+#macro dec_data() {
+    data[data_pointer] -= 1
+
+    data[data_pointer] %= 256
+}
+
+#macro output() {
+    print(data[data_pointer])
+}
+
+#define > \n#inc()\n
+#define < \n#dec()\n
+#define + \n#inc_data()\n
+#define - \n#dec_data()\n
+#define . \n#output()\n
+#define , \n#input()\n
+#define [ \nfor ; not(data[data_pointer] == 0) ; {\n
+#define ] \n}\n
+
+>++++++++[<+++++++++>-]<.>++++[<+++++++>-]<+.+++++++..+++.>>++++++[<+++++++>-]<+
++.------------.>++++++[<+++++++++>-]<+.<.+++.------.--------.>>>++++[<++++++++>-
+]<+.

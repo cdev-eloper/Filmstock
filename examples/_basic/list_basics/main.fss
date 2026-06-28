@@ -1,0 +1,47 @@
+// Filmstock's List System: THE MATRIX
+
+// The matrix is a list of lists.
+
+// When you allocate a list with lnew(), it gets added at
+// the end of the list of lists.
+
+// You access the individual indexes with the
+// "pointers" (indexes in THE MATRIX).
+
+// You cannot free lists.
+// You can nuke all lists with lreset(), which resets everything
+
+var a = lnew()  // lnew() returns the pointer.
+
+printNum(a)     // This will print the pointer.
+                // The pointers start at 0 and increment by 1.
+nl()
+
+
+// You can use lists as strings
+a.setTo("Hello World\n")
+// This will print the string
+a.print()
+nl()
+
+// This will print the ASCII values
+a.printNum()
+nl()
+
+// And yes, list functions are syntax sugar for:
+// lFUNCTIONNAME
+lprint(a)
+lprint(0)
+lprint(10 - 10)
+
+// Let's do something goofy and sort the letters
+a.sort(0)       // The zero says that the list will be sorted in ascending order.
+                // Use 1 for descending order.
+
+a.print()       // Now it's giberrish
+
+a.empty()       // Let's empty the contents list
+
+print("\n")     // The new line also got sorted, so let's print an another one
+
+a.printNum()    // As we see, an empty List

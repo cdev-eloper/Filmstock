@@ -1,0 +1,28 @@
+// Prints if a is divisible by two
+#macro printDivisible(word) {
+    print("a is $word divisible by two: ")
+    printNum(a)     // a is from outer scope
+    nl()
+}
+
+// Here we iterate over the numbers from 0 to 9.
+
+// Notice how we don't use parentheses around if and for loops.
+// The ; is only used in for loops.
+// it(i) is identical to i++
+// ia(i) is identical to ++i
+for var a = 0; a < 10; it(a) {
+    if (a % 2) == 0 {
+        #printDivisible(indeed)  // We cannot have empty arguments so let's say indeed
+
+        continue
+    }
+    else {
+        #printDivisible(not)
+
+        continue
+    }
+
+    print("This never executes!")
+    break
+}

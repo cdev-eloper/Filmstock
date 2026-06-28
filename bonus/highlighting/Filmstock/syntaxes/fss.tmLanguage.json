@@ -1,0 +1,34 @@
+{
+  "name": "Filmstock",
+  "scopeName": "source.fss",
+  "fileTypes": ["fss"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#macros" },
+    { "include": "#flow" },
+    { "include": "#var" },
+    { "include": "#keywords" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.double-slash.fss",
+      "match": "//.*$"
+    },
+    "var": {
+    "name": "storage.modifier.fss",
+    "match": "\\bvar\\b"
+    },
+    "flow": {
+    "name": "keyword.control.flow.fss",
+    "match": "\\b(for|if|else|break|continue)\\b"
+    },
+    "macros": {
+    "name": "entity.name.tag.preprocessor.fss",
+    "match": "#\\w+"
+    },
+    "keywords": {
+      "name": "support.function.builtin.fss",
+      "match": "\\b(not|linput|input|lload|load|lstore|store|printSep|nl|pi|sin|cos|tan|asin|acos|atan2|root|sqrt|round|ceil|floor|time|print|printNum|sleep|random|it|ia|lamount|amount|lreset|reset|lnew|lget|get|lset|set|llen|len|ladd|add|lremove|remove|lempty|empty|linsert|insert|reverse|lreverse|lshuffle|shuffle|sort|lsort|lprint|lprintNum|lprintSep|dStart|dEnd|setColor|setPosition|setTextSize|ldrawTriangles|drawTriangles|ldrawText|drawText|isPressed|isMousePressed|mouseX|mouseY|getScroll|width|height|setTo|lsetTo)\\b"
+    }
+  }
+}

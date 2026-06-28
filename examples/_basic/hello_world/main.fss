@@ -1,0 +1,29 @@
+// Different ways to quote Brian Kernighan
+
+print("Hello World!\n")     // Prints string value
+
+// String literals are only Syntax sugar for numbers and commas.
+
+// As such "Hello World!\n" is transformed into the indexes of the
+// individual characters.
+
+// "Hello World!\n" -> 72.00, 101.00, 108.00, 108.00, ...
+
+// Let's print the values as what they truly are, numbers.
+printNum("Hello World!\n")  // Prints UTF-8 codes, does not print a new line!
+nl()                        // Prints new line
+
+
+// Now let's experiment with lists
+var string = lnew()             // Create a new list
+string.setTo("Hello World!\n")  // Set it to be "Hello World!\n"
+
+string.print()          // Print values in the list
+string.printNum()       // Print values in the list as the UTF-8 codes
+nl()
+
+// Defines only applied AFTER they are written
+#define hello! World!
+#define world Hello
+
+print("world hello!\n")

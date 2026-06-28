@@ -1,0 +1,140 @@
+// Implementation of the painter's algorithm with buckets.
+//
+// We have vertices, trigs and colors lists given my the model.
+//
+// We rotate the points with a simple 2D rotation matrix.
+//
+// Then we project the points with perspective projection and
+// Store then in the projected list.
+//
+// We sort the triangles by their average Z-value
+// and put them into bucket lists.
+//
+// We go through these bucket lists to create the drawing_queue,
+// where we store indices of the triangles in the order that they
+// are going to be drawn.
+//
+// And finally we draw the triangles from the drawing_queue.
+//
+// When drawing we apply a simple shading effect,
+
+#include math_helper.fss
+
+var LIST_AMOUNT = 5000
+var FAR_CLIP = 5
+var NEAR_CLIP = 0.1
+
+var FOV = 90
+var f = 1 / tan(FOV / 2 * (2 * pi() / 360)) // FOV value for projection formula
+
+var scale = 1
+
+var model_z_offset = 1  // What's actually drawn
+var goal_z_offset = 2   // Real camera position
+
+var rotation_left = pi()
+var rotation_speed = 0.05
+
+var MOUSE_SENS = 8
+
+// Stored as follows:
+// X, Y, Z, X, Y, Z, ...
+var vertices = lnew()
+
+// The 3D unprojected triangles.
+// Stored as follows:
+// P1, P2, P3, P1, P2, P3, ...
+var trigs = lnew()
+
+// The colors of each trig.
+// Stored as follows:
+// R, G, B, R, G, B, ...
+var colors = lnew()
+
+#include light.fss
+#include model.fss
+
+// The base pointer for
+// the lists storing the projected triangles
+var base_bucket = lnew()
+
+// Create the lists
+for var i = 1; i < LIST_AMOUNT; it(i) {
+    lnew()
+}
+
+// Stores the projected points
+var projected = lnew()
+for var i = 0; i < vertices.len() / 3; it(i) {
+    projected.add(0)
+    projected.add(0)
+}
+
+var drawing_queue = lnew()
+
+#include 3d.fss
+
+var lastTime = time()
+var was_pressing
+var l_mouse_x
+var l_mouse_y
+
+
+#macro handle_input() {
+    var scroll = getScroll()
+
+    goal_z_offset += scroll * (-0.4) * width() * 0.001
+
+    if (goal_z_offset < 0.6) {
+        goal_z_offset = 0.6
+    }
+
+    if (isMousePressed(0)) {
+        if (was_pressing) {
+            var dx = mouseX() - l_mouse_x
+            // var dy = mouseY() - l_mouse_y
+
+            rotation_left -= dx * MOUSE_SENS / width()
+            // #rotate_points(-1 * width() * dy * MOUSE_SENS, 1, 2)
+        }
+        was_pressing = 1
+
+        l_mouse_x = mouseX()
+        l_mouse_y = mouseY()
+    }
+    else {
+        was_pressing = 0
+    }
+
+    // Ease in camera
+    model_z_offset = goal_z_offset * 0.05 + model_z_offset * 0.95
+
+    // Ease rotation
+    var to_rotate = rotation_left * rotation_speed
+    rotation_left -= to_rotate
+
+    #rotate_points(to_rotate, 0, 2)
+}
+
+for ; 1 ; {
+    dStart()
+
+    #empty_buckets()
+
+    #bucket_trigs()
+
+    #generate_queue()
+
+    #project_points()
+
+    #fillScreen(30, 30, 30, 255)
+
+    #draw()
+
+    dEnd()
+
+    #handle_input()
+
+    sleep(16-(time()-lastTime))
+    lastTime = time()
+}

@@ -1,0 +1,22 @@
+{
+  "name": "filmstock",
+  "displayName": "Filmstock",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.50.0" },
+  "contributes": {
+    "languages": [
+      {
+        "id": "fss",
+        "extensions": [".fss"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fss",
+        "scopeName": "source.fss",
+        "path": "./syntaxes/fss.tmLanguage.json"
+      }
+    ]
+  }
+}

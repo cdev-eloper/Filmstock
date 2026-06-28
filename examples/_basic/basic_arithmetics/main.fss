@@ -1,0 +1,30 @@
+// Prints the result of performing one operation on
+// a and b.
+#macro print_opp(a, b, opp) {
+    print("\n$a $opp $b \= ")
+    printNum($a $opp $b)
+}
+
+// Prints the result of performing all operations on
+// a and b.
+#macro print_opps(a, b) {
+    // This gets inlined as:
+    //      print("\n-8 + (1/3) \= ")
+    //      printNum(-8 + (1/3))
+    #print_opp($a, $b, +) // The sum of a and b
+
+    #print_opp($a, $b, -) // The difference of a and b
+
+    #print_opp($a, $b, *) // The product of a and b
+
+    #print_opp($a, $b, /) // The quotient of a and b
+
+    #print_opp($a, $b, ^)  // A raised to the power of b
+
+    #print_opp($a, $b, %) // The modulo (remainder) of a and b
+
+    nl()    // Print a new line for tidyness
+}
+
+// Try out some different numbers!
+#print_opps(-8, (1 / 3) )
